@@ -31,9 +31,5 @@
       "NEXT_SKIP_PAGES_BUILD_OPTIMIZATION": "true",
       "NEXT_PUBLIC_SKIP_OPTIMIZATION_ROUTES": "/activities/create,/activities/[id]/edit"
     }
-  },
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://xdwifyfzzlplcdrylabn.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhkd2lmeWZ6emxwbGNkcnlsYWJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyNDY5MjcsImV4cCI6MjA1ODgyMjkyN30.7CQG-kWz-ogbpk7n9lIh-pKawjTqu81w8k2ZNHQUiA0"
   }
 } 
