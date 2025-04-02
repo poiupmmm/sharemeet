@@ -306,7 +306,8 @@ export async function POST(request: NextRequest) {
                 email, 
                 username, 
                 password: hashedPassword,
-                created_at: new Date()
+                created_at: new Date(),
+                updated_at: new Date()
               }
             ])
             .select();

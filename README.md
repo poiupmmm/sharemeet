@@ -106,11 +106,12 @@ user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE
 
 ## 数据库架构说明
 
-最新版本的数据库架构已经移除了评论功能，并针对profiles表进行了优化，具体变更包括：
+最新版本的数据库架构已经进行了以下优化：
 
 1. 移除了comments表及相关的RLS策略和索引
 2. 在profiles表的user_id列上添加了UNIQUE约束，确保ON CONFLICT语句能正常工作
 3. 应用程序API已调整为即使profiles表不可用，也可以完成用户注册流程
+4. 在users表添加了updated_at列，以便跟踪用户数据的最后更新时间
 
 ## 项目结构
 

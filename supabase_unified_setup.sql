@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   username VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   last_login TIMESTAMP WITH TIME ZONE,
   role VARCHAR(50) DEFAULT 'user'
 );
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.activities (
   price VARCHAR(255),
   attendees_limit INTEGER, -- 参与者上限
   is_public BOOLEAN DEFAULT TRUE,
+  participants_count INTEGER DEFAULT 0, -- 参与人数
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -185,7 +187,7 @@ $$;
 
 -- 创建更新活动参与人数的函数
 CREATE OR REPLACE FUNCTION public.update_activity_participant_count(
-  activity_id UUID
+  activity_id_param UUID
 ) RETURNS BOOLEAN
 LANGUAGE plpgsql SECURITY DEFINER
 AS $$
@@ -195,12 +197,12 @@ BEGIN
   -- 计算参与者数量
   SELECT COUNT(*) INTO participant_count
   FROM public.activity_participants
-  WHERE activity_id = update_activity_participant_count.activity_id;
+  WHERE activity_participants.activity_id = activity_id_param;
   
   -- 更新活动参与人数
   UPDATE public.activities
   SET participants_count = participant_count
-  WHERE id = update_activity_participant_count.activity_id;
+  WHERE id = activity_id_param;
   
   RETURN TRUE;
 EXCEPTION WHEN OTHERS THEN
@@ -231,4 +233,26 @@ $$;
 
 -- 为用户授予执行此函数的权限
 GRANT EXECUTE ON FUNCTION public.execute_sql TO anon;
-GRANT EXECUTE ON FUNCTION public.execute_sql TO authenticated; 
+GRANT EXECUTE ON FUNCTION public.execute_sql TO authenticated;
+
+-- 创建递增活动参与人数的函数
+CREATE OR REPLACE FUNCTION public.increment_participants_count(
+  activity_id_param UUID
+) RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
+BEGIN
+  -- 更新活动参与人数 (+1)
+  UPDATE public.activities
+  SET participants_count = COALESCE(participants_count, 0) + 1
+  WHERE id = activity_id_param;
+  
+  RETURN TRUE;
+EXCEPTION WHEN OTHERS THEN
+  RAISE EXCEPTION '更新参与人数失败: %', SQLERRM;
+END;
+$$;
+
+-- 为用户授予执行此函数的权限
+GRANT EXECUTE ON FUNCTION public.increment_participants_count TO anon;
+GRANT EXECUTE ON FUNCTION public.increment_participants_count TO authenticated; 

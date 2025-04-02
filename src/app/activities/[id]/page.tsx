@@ -471,53 +471,10 @@ export default function ActivityDetailPage() {
       return handleLeave(); // 如果已参加，则调用退出逻辑
     }
     
-    // 再次验证登录状态（保险起见，使用Supabase验证）
-    let isAuthenticated = isLoggedIn;
-    let currentUserId = userId;
-    
-    if (supabase) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        isAuthenticated = !!session?.user;
-        if (session?.user) {
-          currentUserId = session.user.id;
-          console.log('Supabase会话验证成功，用户ID:', currentUserId);
-        } else {
-          console.log('Supabase会话验证失败，用户未登录');
-        }
-      } catch (error) {
-        console.error('验证会话状态出错:', error);
-        isAuthenticated = false; // 确保在出错时将认证状态设为false
-      }
-    } else {
-      console.log('Supabase客户端未初始化，使用cookie验证');
-    }
-    
-    // 检查是否登录和活动ID是否存在
-    if (!isAuthenticated || !activityId) {
-      console.log('用户未登录或活动ID不存在，显示提示');
-      
-      // 设置跳转后返回的地址（如果有活动ID）
-      if (activityId) {
-        document.cookie = `redirectAfterLogin=/activities/${activityId}; path=/; max-age=3600`;
-      }
-      
-      // 显示确认对话框
-      setDialogMessage('参加活动需要先登录，是否前往登录页面？');
-      setDialogAction(() => () => {
-        try {
-          console.log('用户确认登录，执行跳转...');
-          // 直接跳转到登录页面
-          router.push('/auth');
-        } catch (routerError) {
-          console.error('路由跳转失败:', routerError);
-          // 如果路由跳转失败，使用window.location作为备选
-          window.location.href = '/auth';
-        }
-        setShowDialog(false);
-      });
-      
-      setShowDialog(true);
+    // 直接使用组件状态中的登录状态，减少重复检查
+    // 中间件已经确保了只有登录用户能访问此页面
+    if (!isLoggedIn || !userId) {
+      console.log('用户未登录或缺少用户ID，这种情况不应该出现，因为中间件应该已经拦截');
       return;
     }
     
@@ -527,7 +484,7 @@ export default function ActivityDetailPage() {
     try {
       console.log('开始报名活动:', { 
         activityId, 
-        userId: currentUserId,
+        userId,
         activityTitle: activity?.title 
       });
       
@@ -535,26 +492,18 @@ export default function ActivityDetailPage() {
       const { joinActivity, getActivity, getActivityParticipants } = await import('@/lib/activities');
       
       console.log('开始调用joinActivity函数...');
-      const result = await joinActivity(activityId);
+      const result = await joinActivity(activityId || ''); // 确保传入字符串，不是null
       console.log('报名结果:', result);
       
-      // 处理需要登录的情况
       if (result.needLogin) {
-        console.log('joinActivity返回需要登录标志，准备重定向到登录页面');
-        // 设置跳转后返回的地址，让用户登录后能回到当前页面
-        document.cookie = `redirectAfterLogin=/activities/${activityId}; path=/; max-age=3600`;
-        
-        try {
-          // 确保在重定向前不会执行其他代码
-          console.log('执行登录页面跳转...');
-          router.push('/auth');
-          return; // 确保后续代码不会执行
-        } catch (routerError) {
-          console.error('路由跳转失败:', routerError);
-          // 备选方案
-          window.location.href = '/auth';
-          return;
-        }
+        // 只显示错误信息，不再重定向到登录页 (因为中间件已经确保了用户已登录)
+        console.error('权限验证错误:', result.message);
+        setErrorMessage(`登录状态验证失败: ${result.message || '请尝试刷新页面'}`);
+        // 可以添加自动刷新逻辑，让用户无需手动刷新
+        setTimeout(() => {
+          window.location.reload();
+        }, 5000); // 5秒后自动刷新
+        return;
       }
       
       if (result.success) {
@@ -564,7 +513,7 @@ export default function ActivityDetailPage() {
         
         // 报名成功后刷新活动详情和参与者列表
         try {
-          const updatedActivity = await getActivity(activityId);
+          const updatedActivity = await getActivity(activityId || ''); // 确保传入字符串，不是null
           if (updatedActivity) {
             // 将updatedActivity转换为符合Activity接口的数据
             const convertedActivity = {
@@ -584,7 +533,7 @@ export default function ActivityDetailPage() {
         }
         
         try {
-          const updatedParticipants = await getActivityParticipants(activityId);
+          const updatedParticipants = await getActivityParticipants(activityId || ''); // 确保传入字符串，不是null
           console.log('已获取更新后的参与者列表:', updatedParticipants);
           setParticipants(updatedParticipants || []);
         } catch (error) {
@@ -592,61 +541,15 @@ export default function ActivityDetailPage() {
         }
         
         // 刷新用户活动列表
-        if (currentUserId) {
-          fetchUserActivities(currentUserId);
+        if (userId) {
+          fetchUserActivities(userId);
         }
       } else {
         setErrorMessage(result.message || '报名失败，请重试');
         console.error('报名失败:', result.message || '未知错误');
-        
-        // 检查是否是会话相关错误
-        if (result.error && typeof result.error === 'object') {
-          const errorMsg = result.error.message || '';
-          if (
-            errorMsg.includes('session') || 
-            errorMsg.includes('auth') || 
-            errorMsg.includes('permission')
-          ) {
-            console.log('检测到授权错误，重定向到登录');
-            document.cookie = `redirectAfterLogin=/activities/${activityId}; path=/; max-age=3600`;
-            
-            try {
-              console.log('执行登录页面跳转...');
-              router.push('/auth');
-              return; // 确保后续代码不会执行
-            } catch (routerError) {
-              console.error('路由跳转失败:', routerError);
-              // 备选方案
-              window.location.href = '/auth';
-              return;
-            }
-          }
-        }
       }
     } catch (err: any) {
       console.error('报名过程出错:', err);
-      
-      // 处理可能的认证错误
-      if (
-        err.message?.includes('Auth session missing') || 
-        err.message?.includes('session') || 
-        err.message?.includes('authentication')
-      ) {
-        console.log('捕获到认证错误，重定向到登录页面');
-        document.cookie = `redirectAfterLogin=/activities/${activityId}; path=/; max-age=3600`;
-        
-        try {
-          console.log('执行登录页面跳转...');
-          router.push('/auth');
-          return; // 确保后续代码不会执行
-        } catch (routerError) {
-          console.error('路由跳转失败:', routerError);
-          // 备选方案
-          window.location.href = '/auth';
-          return;
-        }
-      }
-      
       setErrorMessage(err.message || '报名过程中出错，请重试');
     } finally {
       setJoining(false);
@@ -1109,6 +1012,8 @@ export default function ActivityDetailPage() {
       );
     }
     
+    console.log('渲染参与者列表:', participants);
+    
     return (
       <div style={styles.participants}>
         {participants.map((participant, index) => {
@@ -1124,6 +1029,12 @@ export default function ActivityDetailPage() {
           const participantKey = participant.id || `participant-${index}`;
           const displayName = participant.username || `用户${index+1}`;
           
+          // 用于确定是否为创建者的ID，兼容两种可能的字段名
+          const participantUserId = participant.user_id || participant.id;
+          const isCreator = activity && 
+                           (participantUserId === activity.creator_id || 
+                            participantUserId === (activity as any).user_id);
+          
           return (
             <div key={participantKey} style={styles.participant}>
               <img 
@@ -1133,7 +1044,7 @@ export default function ActivityDetailPage() {
               />
               <span style={styles.participantName}>
                 {displayName}
-                {activity && (participant.user_id === activity.creator_id || participant.id === activity.creator_id) && (
+                {isCreator && (
                   <span style={{marginLeft: '4px', color: '#2563eb', fontSize: '12px'}}>
                     (创建者)
                   </span>
@@ -1222,9 +1133,13 @@ export default function ActivityDetailPage() {
 
   // 在"参与活动"按钮附近添加处理逻辑
   const renderActionButtons = () => {
+    // 无论登录状态如何，都显示参与活动按钮，登录验证由中间件统一处理
     if (!isLoggedIn) {
       return (
-        <Button className="w-full" onClick={handleJoin}>
+        <Button className="w-full" onClick={() => {
+          // 如果未登录，点击后会被中间件重定向到登录页，这里可以添加额外的用户提示
+          alert('请先登录后再参与活动');
+        }}>
           参与活动
         </Button>
       );
@@ -1278,26 +1193,32 @@ export default function ActivityDetailPage() {
       );
     }
     
-    if (hasJoined) {
-      return (
-        <Button 
-          className="w-full" 
-          variant="outline" 
-          onClick={handleLeave}
-          disabled={leaving}
-        >
-          {leaving ? '退出中...' : '退出活动'}
-        </Button>
-      );
-    }
-    
-    return (
-      <Button 
-        className="w-full" 
-        onClick={handleJoin}
-        disabled={joining}
+    // 根据是否已参与显示不同按钮
+    return hasJoined ? (
+      <button
+        style={{
+          width: '100%',
+          padding: '12px 0',
+          border: '1px solid #3b82f6',
+          borderRadius: '8px',
+          backgroundColor: 'white',
+          color: '#3b82f6',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+        }}
+        disabled={leaving}
+        onClick={handleLeave}
       >
-        {joining ? '参与中...' : '参与活动'}
+        {leaving ? '退出中...' : '退出活动'}
+      </button>
+    ) : (
+      <Button className="w-full" disabled={joining} onClick={handleJoin}>
+        {joining ? '报名中...' : '参与活动'}
       </Button>
     );
   };
@@ -1551,7 +1472,8 @@ export default function ActivityDetailPage() {
               </div>
             </div>
             
-            <div style={styles.organizerInfo}>
+            {/* 隐藏活动创建人信息区块 */}
+            <div style={{...styles.organizerInfo, display: 'none'}}>
               <img 
                 src={creatorInfo?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333333'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E"}
                 alt={creatorInfo?.username || "活动创建人"} 

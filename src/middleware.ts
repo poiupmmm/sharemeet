@@ -13,7 +13,8 @@ const protectedPaths = [
   '/',
   '/activities',
   '/activities/create',
-  '/profile'
+  '/profile',
+  '/activities/[id]'  // 添加活动详情页路径
 ]
 
 export function middleware(request: NextRequest) {
@@ -26,7 +27,19 @@ export function middleware(request: NextRequest) {
   
   // 检查当前路径是否需要保护
   const isProtectedPath = protectedPaths.some(
-    path => pathname === path || pathname.startsWith(`${path}/`) 
+    path => {
+      // 特殊处理动态路由，例如/activities/[id]应该匹配所有/activities/数字 的路径
+      if (path.includes('[id]')) {
+        const basePath = path.split('/[id]')[0];
+        const pathSegments = pathname.split('/');
+        if (pathSegments.length >= 3 && pathSegments[1] === 'activities') {
+          return true; // 匹配所有/activities/{任何id}的路径
+        }
+        return false;
+      }
+      // 常规路径匹配
+      return pathname === path || pathname.startsWith(`${path}/`);
+    }
   )
   
   // 从Cookie获取登录状态
@@ -44,8 +57,14 @@ export function middleware(request: NextRequest) {
   
   // 如果需要保护的路径但未登录，重定向到登录页
   if (isProtectedPath && !isLoggedIn) {
-    const url = new URL('/auth', request.url)
-    return NextResponse.redirect(url)
+    // 设置重定向cookie，登录后返回当前页面
+    const response = NextResponse.redirect(new URL('/auth', request.url))
+    response.cookies.set('redirectAfterLogin', pathname, { 
+      path: '/',
+      maxAge: 3600,
+      httpOnly: false
+    })
+    return response
   }
   
   // 其他情况允许访问
