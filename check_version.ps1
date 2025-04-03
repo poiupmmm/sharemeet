@@ -1,0 +1,1 @@
+Write-Host 'Checking for Cursor updates...'; Start-Process 'cursor://update-check'

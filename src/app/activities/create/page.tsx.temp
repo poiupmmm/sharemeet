@@ -1,0 +1,70 @@
+"use client";
+
+import { useState, ChangeEvent, FormEvent, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+
+// 图标组件
+const BackIcon = () => (
+  <span className="material-icons">arrow_back</span>
+);
+
+const ImageIcon = () => (
+  <span className="material-icons">photo_camera</span>
+);
+
+const ExploreIcon = () => (
+  <span className="material-icons">explore</span>
+);
+
+const PersonIcon = () => (
+  <span className="material-icons">person</span>
+);
+
+// 活动类别
+const categories = [
+  { id: 'outdoor', name: '户外' },
+  { id: 'sports', name: '运动' },
+  { id: 'music', name: '音乐' },
+  { id: 'food', name: '美食' },
+  { id: 'art', name: '艺术' },
+  { id: 'tech', name: '科技' },
+  { id: 'learning', name: '学习' },
+  { id: 'social', name: '社交' },
+];
+
+// 城市选项
+const cities = [
+  { id: 'beijing', name: '北京' },
+  { id: 'shanghai', name: '上海' },
+  { id: 'guangzhou', name: '广州' },
+  { id: 'shenzhen', name: '深圳' },
+  { id: 'hangzhou', name: '杭州' },
+  { id: 'chengdu', name: '成都' },
+];
+
+// 表单类型
+interface FormData {
+  title: string;
+  category: string;
+  date: string;
+  time: string;
+  endDate: string;  // 新增结束日期
+  endTime: string;  // 新增结束时间
+  location: string;
+  city: string;
+  price: string;
+  maxParticipants: string;
+  description: string;
+  requirements: string;
+  imageUrl: string;
+  organizer: string;  // 添加组织者字�?}
+
+// 添加动态配置，防止在构建时预渲�?export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0; // 确保这是数字而非函数
+export const fetchCache = 'force-no-store';
+export const runtime = 'nodejs';
+
+// 添加配置对象，符合Next.js 15的格�?export const generateMetadata = () => {
+  return {
