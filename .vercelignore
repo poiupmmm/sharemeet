@@ -10,4 +10,5 @@ check_version.ps1
 write-file.js
 Untitled-1.html
 add_city_column.sql
-supabase_unified_setup.sql 
+supabase_unified_setup.sql
+vercel.json 
