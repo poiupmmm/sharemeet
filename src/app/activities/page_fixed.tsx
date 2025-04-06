@@ -71,8 +71,8 @@ const categories = [
 
 // 排序选项
 const sortOptions = [
-  { id: 'newest', name: '最新发�? },
-  { id: 'popular', name: '最受欢�? },
+  { id: 'newest', name: '最新发布' },
+  { id: 'popular', name: '最受欢迎' },
   { id: 'date_asc', name: '日期从近到远' },
   { id: 'date_desc', name: '日期从远到近' },
 ];
@@ -92,9 +92,9 @@ const cities = [
 const mockActivities = [
   {
     id: 1,
-    title: '周末登山俱乐�?🏔�?,
-    organizer: '自然探险俱乐�?,
-    date: '本周�?09:00',
+    title: '周末登山俱乐部🏔️',
+    organizer: '自然探险俱乐部',
+    date: '本周六 09:00',
     location: '白云山风景区东门',
     imageUrl: 'https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3',
     category: '户外运动',
@@ -107,12 +107,12 @@ const mockActivities = [
   },
   {
     id: 2,
-    title: '《人类简史》读书分�?📚',
-    organizer: '城市读书�?,
-    date: '本周�?15:00',
-    location: '城市书房咖啡�?,
+    title: '《人类简史》读书分享📚',
+    organizer: '城市读书会',
+    date: '本周日 15:00',
+    location: '城市书房咖啡厅',
     imageUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=1969&auto=format&fit=crop&ixlib=rb-4.0.3',
-    category: '读书�?,
+    category: '读书会',
     attendees: [
       'https://i.pravatar.cc/24?img=4',
       'https://i.pravatar.cc/24?img=5'
@@ -123,8 +123,8 @@ const mockActivities = [
     id: 3,
     title: '人工智能前沿讲座',
     organizer: '科技前沿研究所',
-    date: '下周�?19:00',
-    location: '深圳市南山区科技�?,
+    date: '下周三 19:00',
+    location: '深圳市南山区科技园',
     imageUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3',
     category: '科技',
     attendees: [
@@ -136,10 +136,10 @@ const mockActivities = [
   },
   {
     id: 4,
-    title: '城市摄影工作�?,
+    title: '城市摄影工作坊',
     organizer: '视觉艺术协会',
-    date: '下周�?10:00',
-    location: '广州市天河区美术�?,
+    date: '下周六 10:00',
+    location: '广州市天河区美术馆',
     imageUrl: 'https://images.unsplash.com/photo-1542528180-a1208c5169a5?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3',
     category: '艺术',
     attendees: [
@@ -159,18 +159,18 @@ export default function ActivitiesPage() {
   const [filterType, setFilterType] = useState<'category' | 'city' | null>(null);
   const [userData, setUserData] = useState<any>(null);
   
-  // 筛选条�?
+  // 筛选条
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedSort, setSelectedSort] = useState('newest');
   
-  // 登录状�?
+  // 登录状态
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // 检查登录状态并获取用户数据
   useEffect(() => {
-    // 从cookie获取登录状�?
+    // 从cookie获取登录状态
     const cookies = document.cookie.split(';');
     const isLoggedInCookie = cookies.find(cookie => cookie.trim().startsWith('isLoggedIn='));
     const isUserLoggedIn = isLoggedInCookie?.includes('true') || false;
@@ -205,7 +205,7 @@ export default function ActivitiesPage() {
         setFilteredActivities(data);
       } catch (error) {
         console.error('获取活动失败:', error);
-        // 获取失败时使用本地模拟数�?
+        // 获取失败时使用本地模拟数据
         setActivities(mockActivities as unknown as Activity[]);
         setFilteredActivities(mockActivities as unknown as Activity[]);
       } finally {
@@ -223,7 +223,7 @@ export default function ActivitiesPage() {
     setTimeout(() => {
       let filtered = [...activities];
       
-      // 搜索筛�?
+      // 搜索筛选
       if (searchQuery) {
         filtered = filtered.filter(activity => 
           activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -231,14 +231,14 @@ export default function ActivitiesPage() {
         );
       }
       
-      // 类别筛�?
+      // 类别筛选
       if (selectedCategory !== 'all') {
         filtered = filtered.filter(activity => 
           activity.category.includes(selectedCategory)
         );
       }
       
-      // 城市筛�?- 通过location字段模糊匹配
+      // 城市筛选- 通过location字段模糊匹配
       if (selectedCity !== 'all') {
         const cityName = cities.find(c => c.id === selectedCity)?.name || '';
         filtered = filtered.filter(activity => 
@@ -249,16 +249,28 @@ export default function ActivitiesPage() {
       // 排序
       switch (selectedSort) {
         case 'newest':
-          filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          filtered.sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return dateB - dateA;
+          });
           break;
         case 'popular':
-          filtered.sort((a, b) => b.participants_count - a.participants_count);
+          filtered.sort((a, b) => (b.participants_count || 0) - (a.participants_count || 0));
           break;
         case 'date_asc':
-          filtered.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+          filtered.sort((a, b) => {
+            const dateA = a.start_time ? new Date(a.start_time).getTime() : 0;
+            const dateB = b.start_time ? new Date(b.start_time).getTime() : 0;
+            return dateA - dateB;
+          });
           break;
         case 'date_desc':
-          filtered.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+          filtered.sort((a, b) => {
+            const dateA = a.start_time ? new Date(a.start_time).getTime() : 0;
+            const dateB = b.start_time ? new Date(b.start_time).getTime() : 0;
+            return dateB - dateA;
+          });
           break;
       }
       
@@ -267,7 +279,7 @@ export default function ActivitiesPage() {
     }, 500);
   }, [searchQuery, selectedCategory, selectedCity, selectedSort, activities]);
   
-  // 重置筛选条�?
+  // 重置筛选条
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('all');
@@ -283,7 +295,7 @@ export default function ActivitiesPage() {
       background: '#f5f7fa',
       minHeight: '100vh',
       position: 'relative' as const,
-      paddingBottom: '60px', // 为底部导航预留空�?
+      paddingBottom: '60px', // 为底部导航预留空间
     },
     headerFixed: {
       position: 'fixed' as const,
@@ -558,7 +570,7 @@ export default function ActivitiesPage() {
     const headerElement = document.querySelector('[data-header-fixed]');
     const mainContent = document.querySelector('[data-main-content]');
     
-    // 当滚动页面时确保headerFixed仍然固定在顶�?
+    // 当滚动页面时确保headerFixed仍然固定在顶部
     const handleScroll = () => {
       if (headerElement) {
         // 强制设置为固定在顶部
@@ -570,10 +582,10 @@ export default function ActivitiesPage() {
     // 添加滚动监听
     window.addEventListener('scroll', handleScroll);
     
-    // 初始化时执行一�?
+    // 初始化时执行一次
     handleScroll();
     
-    // 确保在筛选面板显�?隐藏时更新内容区域的顶部边距
+    // 确保在筛选面板显示隐藏时更新内容区域的顶部边距
     const updateContentMargin = () => {
       if (headerElement && mainContent) {
         const headerHeight = headerElement.getBoundingClientRect().height;
@@ -582,13 +594,13 @@ export default function ActivitiesPage() {
       }
     };
     
-    // 初始时延迟执行以确保DOM已更�?
+    // 初始时延迟执行以确保DOM已更新
     setTimeout(updateContentMargin, 100);
     
-    // 每当showFilters变化时也要更�?
+    // 每当showFilters变化时也要更新
     updateContentMargin();
     
-    // 窗口大小改变时也要更�?
+    // 窗口大小改变时也要更新
     window.addEventListener('resize', updateContentMargin);
     
     return () => {
@@ -599,9 +611,9 @@ export default function ActivitiesPage() {
 
   // 渲染活动卡片
   const renderActivityCard = (activity: Activity) => {
-    // 从日期中提取月日和时间信�?
+    // 从日期中提取月日和时间信息
     const startDate = new Date(activity.start_time);
-    const formattedDate = `${startDate.getMonth() + 1}�?{startDate.getDate()}�?${startDate.getHours()}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+    const formattedDate = `${startDate.getMonth() + 1}月${startDate.getDate()}日${startDate.getHours()}:${String(startDate.getMinutes()).padStart(2, '0')}`;
     
     return (
       <Link href={`/activities/${activity.id}`} key={activity.id} style={styles.activityCard}>
@@ -630,12 +642,12 @@ export default function ActivitiesPage() {
           
           <div style={styles.activityMeta}>
             <div style={styles.activityAttendees}>
-              {/* 这里可以添加参与者头�?*/}
-              <span style={styles.activityAttendeesCount}>{activity.participants_count}人参�?/span>
+              {/* 这里可以添加参与者头像*/}
+              <span style={styles.activityAttendeesCount}>{activity.participants_count}人参加</span>
             </div>
             
             <div style={styles.activityPrice}>
-              {activity.max_participants ? `�?{activity.max_participants}人` : ''}
+              {activity.max_participants ? `最多${activity.max_participants}人` : ''}
             </div>
           </div>
         </div>
@@ -652,10 +664,10 @@ export default function ActivitiesPage() {
         setActivities(data);
         setFilteredActivities(data);
         
-        // 重置筛选条�?
+        // 重置筛选条
         resetFilters();
         
-        // 滚动到顶�?
+        // 滚动到顶部
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (error) {
         console.error('刷新活动失败:', error);
@@ -671,7 +683,7 @@ export default function ActivitiesPage() {
     setFilterType(null);
   };
 
-  // 选择筛选类�?
+  // 选择筛选类型
   const handleFilterTypeSelect = (type: 'category' | 'city') => {
     setFilterType(type);
   };
@@ -688,7 +700,7 @@ export default function ActivitiesPage() {
 
   return (
     <div style={styles.container}>
-      {/* 如果未登录，显示加载中状态，等待重定�?*/}
+      {/* 如果未登录，显示加载中状态，等待重定向*/}
       {!isLoggedIn ? (
         <div style={{
           display: 'flex',
@@ -696,7 +708,7 @@ export default function ActivitiesPage() {
           alignItems: 'center',
           height: '100vh'
         }}>
-          <p>检查登录状�?..</p>
+          <p>检查登录状态..</p>
         </div>
       ) : (
         <>
@@ -725,12 +737,12 @@ export default function ActivitiesPage() {
               </div>
             </div>
 
-            {/* 搜索�?*/}
+            {/* 搜索栏*/}
             <div style={styles.searchBarContainer}>
               <div style={styles.searchBar}>
                 <input 
                   type="text" 
-                  placeholder="搜索活动名称、地�?.." 
+                  placeholder="搜索活动名称、地点.." 
                   style={styles.searchInput}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -741,27 +753,27 @@ export default function ActivitiesPage() {
               </div>
             </div>
               
-            {/* 筛选下拉框 - 替换原来的三个按�?*/}
+            {/* 筛选下拉框 - 替换原来的三个按钮*/}
             <div style={{position: 'relative' as const}}>
               <div style={styles.filterButton} onClick={() => setShowFilters(!showFilters)}>
                 筛选选项
                 <FilterIcon />
               </div>
               
-              {/* 筛选主选项下拉�?*/}
+              {/* 筛选主选项下拉框*/}
               {showFilters && !filterType && (
                 <div style={styles.filterDropdown}>
                   <div 
                     style={styles.filterOption}
                     onClick={() => handleFilterTypeSelect('category')}
                   >
-                    分类筛选（当前：{categories.find(c => c.id === selectedCategory)?.name || '全部'}�?
+                    分类筛选（当前：{categories.find(c => c.id === selectedCategory)?.name || '全部'}）
                   </div>
                   <div 
                     style={styles.filterOption}
                     onClick={() => handleFilterTypeSelect('city')}
                   >
-                    城市筛选（当前：{cities.find(c => c.id === selectedCity)?.name || '全部城市'}�?
+                    城市筛选（当前：{cities.find(c => c.id === selectedCity)?.name || '全部城市'}）
                   </div>
                   <div 
                     style={styles.filterOption}
@@ -770,12 +782,12 @@ export default function ActivitiesPage() {
                       closeFilters();
                     }}
                   >
-                    重置全部筛�?
+                    重置全部筛选
                   </div>
                 </div>
               )}
               
-              {/* 分类选项下拉�?*/}
+              {/* 分类选项下拉框*/}
               {showFilters && filterType === 'category' && (
                 <div style={styles.filterDropdown}>
                   {categories.map(category => (
@@ -790,7 +802,7 @@ export default function ActivitiesPage() {
                 </div>
               )}
               
-              {/* 城市选项下拉�?*/}
+              {/* 城市选项下拉框*/}
               {showFilters && filterType === 'city' && (
                 <div style={styles.filterDropdown}>
                   {cities.map(city => (
@@ -811,7 +823,7 @@ export default function ActivitiesPage() {
           <div style={styles.mainContent} data-main-content>
             {loading ? (
               <div style={{padding: '16px', textAlign: 'center'}}>
-                加载�?..
+                加载中..
               </div>
             ) : filteredActivities.length > 0 ? (
               filteredActivities.map(renderActivityCard)
