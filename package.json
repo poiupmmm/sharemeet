@@ -41,5 +41,6 @@
     "raw-loader": "^4.0.2",
     "style-loader": "^3.3.4",
     "typescript": "^5.3.3"
-  }
+  },
+  "// Fixed tailwind-merge package location": "for vercel deployment"
 }
