@@ -117,6 +117,11 @@ export async function getActivity(id: string) {
       created_at: data.created_at,
       participants_count: data.participants_count || 0,
       is_creator: false, // 这个值将在前端根据当前用户设置
+      city: data.city, // 添加城市字段
+      price: data.price, // 添加价格字段
+      requirements: data.requirements, // 添加参与要求字段
+      is_online: data.is_online, // 添加是否在线字段
+      organizer: data.organizer_name, // 添加组织者字段
     };
 
     cacheService.set(cacheKey, activity);

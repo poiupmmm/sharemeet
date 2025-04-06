@@ -2,11 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['images.unsplash.com']
+    domains: ['images.unsplash.com', 'lh3.googleusercontent.com', 'vercel.com'],
   },
   eslint: {
     // 忽略构建时的ESLint错误
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
     // 忽略构建时的TS错误
@@ -14,24 +14,26 @@ const nextConfig = {
   },
   // 外部包配置和其他实验性功能
   experimental: {
-    // 新的配置方式
-    serverExternalPackages: ['bcrypt'],
-    // 添加其他实验性特性
     serverActions: true,
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
   // 添加一些安全响应头
-  headers: async () => {
+  async headers() {
     return [
       {
-        source: '/api/:path*',
+        source: '/(.*)',
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'no-store, max-age=0',
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
           {
-            key: 'Content-Type',
-            value: 'application/json',
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
           },
         ],
       },
@@ -43,9 +45,33 @@ const nextConfig = {
   },
   // 在编译时跳过预渲染特定路径
   compiler: {
-    // 禁用构建中的特定警告
-    styledComponents: true,
-  }
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? {
+          exclude: ['error', 'warn'],
+        }
+      : false,
+  },
+  // 自定义webpack配置，以适配微信小程序需求
+  webpack: (config, { isServer, dev }) => {
+    // 支持.wxss和.wxml文件
+    if (!isServer) {
+      config.module.rules.push({
+        test: /\.wxss$/,
+        use: ['style-loader', 'css-loader'],
+      });
+      
+      config.module.rules.push({
+        test: /\.wxml$/,
+        use: ['raw-loader'],
+      });
+    }
+    
+    return config;
+  },
+  env: {
+    NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV || 'development',
+    NEXT_PUBLIC_IS_MINI_PROGRAM: process.env.NEXT_PUBLIC_IS_MINI_PROGRAM || 'false',
+  },
 };
 
 module.exports = nextConfig; 

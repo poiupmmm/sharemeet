@@ -3,7 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signIn, signUp } from '@/lib/auth';
+import { signIn, signUp, checkUserLoggedIn, setLoginState } from '@/lib/auth';
 import styles from './auth.module.css'; // 引入CSS模块
 import { createClient } from '@supabase/supabase-js'; // 直接在前端使用Supabase
 import NetworkTest from './components/NetworkTest'; // 导入新的网络测试组件
@@ -316,17 +316,15 @@ export default function AuthPage() {
         // 继续流程，这不是关键错误
       }
       
-      // 4. 处理用户数据并保存
-      const { password: _, ...userWithoutPassword } = userData;
+      // 4. 使用新的setLoginState函数设置登录状态
+      const loginResult = await setLoginState(userData, 1); // 设置登录状态保持1天
       
-      // 保存用户数据到本地存储
-      localStorage.setItem('userData', JSON.stringify(userWithoutPassword));
+      if (!loginResult) {
+        console.error('设置登录状态失败');
+        throw new Error('设置登录状态失败，请重试');
+      }
       
-      // 设置登录状态cookie
-      document.cookie = "isLoggedIn=true; path=/; max-age=86400";
-      
-      // 设置用户ID cookie，用于后续API调用
-      document.cookie = `userId=${userWithoutPassword.id}; path=/; max-age=86400`;
+      console.log('登录状态已成功设置');
       
       // 检查是否有重定向cookie
       const cookies = document.cookie.split(';');
@@ -451,30 +449,53 @@ export default function AuthPage() {
       
       if (createError) {
         console.error('创建用户错误:', createError);
-        
-        // 特殊处理表不存在的错误
-        if (createError.message?.includes('does not exist')) {
-          return setError('数据库表不存在，请联系管理员');
-        }
-        
-        throw new Error(createError.message || '注册失败');
+        throw new Error(createError.message || '创建用户失败');
       }
       
-      console.log('用户注册成功:', newUser);
+      if (!newUser) {
+        throw new Error('未能获取新用户数据');
+      }
       
-      // 5. 清除表单并切换到登录选项卡
-      setEmail(''); // 保留邮箱方便用户登录
-      setPassword('');
-      setConfirmPassword('');
-      setUsername('');
+      console.log('用户注册成功:', { email: newUser.email, username: newUser.username });
       
-      // 显示成功消息
-      alert('注册成功！请使用您的账号登录系统。');
+      // 5. 使用新的setLoginState函数设置登录状态
+      const loginResult = await setLoginState(newUser, 1); // 设置登录状态保持1天
       
-      // 切换到登录选项卡
-      switchTab('login');
+      if (!loginResult) {
+        console.error('设置登录状态失败');
+        throw new Error('注册成功但设置登录状态失败，请尝试登录');
+      }
+      
+      console.log('登录状态已成功设置');
+      
+      // 6. 创建用户资料
+      const { error: profileError } = await browserClient
+        .from('profiles')
+        .insert([
+          {
+            user_id: newUser.id,
+            username: newUser.username,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ]);
+      
+      if (profileError) {
+        console.warn('创建用户资料错误:', profileError);
+        // 不阻止注册流程继续，这是非关键错误
+      }
+      
+      // 7. 标记注册成功，准备跳转
+      setIsLoggedIn(true);
+      setRedirectTarget('个人中心');
+      
+      // 注册成功后延迟跳转到主页
+      setTimeout(() => {
+        router.push('/activities');
+      }, 1500);
+      
     } catch (err: any) {
-      console.error('客户端直接注册错误:', err);
+      console.error('注册错误:', err);
       setError(err.message || '注册失败，请稍后重试');
       setShowDebug(true);
     } finally {

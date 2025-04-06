@@ -88,9 +88,49 @@ export async function checkUserLoggedIn() {
     // 从cookie获取登录状态
     const cookies = document.cookie.split(';');
     const isLoggedInCookie = cookies.find(cookie => cookie.trim().startsWith('isLoggedIn='));
-    return isLoggedInCookie?.includes('true') || false;
+    const userIdCookie = cookies.find(cookie => cookie.trim().startsWith('userId='));
+    
+    // 验证登录状态和用户ID是否同时存在
+    const isLoggedIn = isLoggedInCookie?.includes('true') || false;
+    const hasUserId = !!userIdCookie && userIdCookie.split('=')[1].trim().length > 0;
+    
+    // 检查localStorage中是否有用户数据
+    const userData = localStorage.getItem('userData');
+    const hasUserData = !!userData && userData.length > 10; // 简单验证数据存在且不是空对象
+    
+    // 所有条件都满足才认为用户真正登录
+    return isLoggedIn && hasUserId && hasUserData;
   } catch (error) {
     console.error('检查登录状态错误:', error);
+    return false;
+  }
+}
+
+// 设置登录状态
+export async function setLoginState(user: any, expiresInDays = 1) {
+  try {
+    if (!user || !user.id) {
+      throw new Error('无效的用户数据');
+    }
+
+    // 计算过期时间（秒）
+    const expiresInSeconds = expiresInDays * 24 * 60 * 60;
+    
+    // 设置登录状态cookie
+    document.cookie = `isLoggedIn=true; path=/; max-age=${expiresInSeconds}`;
+    
+    // 设置用户ID cookie，用于后续API调用
+    document.cookie = `userId=${user.id}; path=/; max-age=${expiresInSeconds}`;
+    
+    // 确保移除密码字段
+    const { password, ...userWithoutPassword } = user;
+    
+    // 保存用户数据到本地存储
+    localStorage.setItem('userData', JSON.stringify(userWithoutPassword));
+    
+    return true;
+  } catch (error) {
+    console.error('设置登录状态错误:', error);
     return false;
   }
 }
@@ -100,6 +140,11 @@ export async function signOut() {
   try {
     // 清除登录状态cookie
     document.cookie = "isLoggedIn=false; path=/; max-age=0";
+    document.cookie = "userId=; path=/; max-age=0";
+    
+    // 清除本地存储中的用户数据
+    localStorage.removeItem('userData');
+    
     return true;
   } catch (error) {
     console.error('注销错误:', error);

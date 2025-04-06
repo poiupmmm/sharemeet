@@ -1,0 +1,156 @@
+<view class="activity-detail-container">
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading">加载中...</view>
+  </view>
+
+  <!-- 错误提示 -->
+  <view class="error-container" wx:if="{{!loading && errorMessage}}">
+    <view class="error-box">
+      <view class="error-title">{{errorMessage}}</view>
+      <button class="primary-button" bindtap="handleBack">返回上一页</button>
+    </view>
+  </view>
+
+  <!-- 活动不存在 -->
+  <view class="not-found-container" wx:if="{{!loading && !activity && !errorMessage}}">
+    <view class="not-found-box">
+      <view class="not-found-title">未找到活动</view>
+      <view class="not-found-desc">该活动不存在或已被删除</view>
+      <button class="primary-button" bindtap="handleBack">返回活动列表</button>
+    </view>
+  </view>
+
+  <!-- 活动详情 -->
+  <block wx:if="{{!loading && activity}}">
+    <!-- 顶部图片 -->
+    <view class="activity-image">
+      <image 
+        src="{{activity.imageUrl || '/assets/images/default-activity.png'}}"
+        mode="aspectFill" 
+        class="cover-image"
+      ></image>
+      <view class="back-button" bindtap="handleBack">
+        <text class="back-icon">◀</text>
+      </view>
+      <view class="share-button" bindtap="onShareAppMessage">
+        <text class="share-icon">⊕</text>
+      </view>
+    </view>
+
+    <!-- 活动内容 -->
+    <view class="activity-content">
+      <view class="badge">{{activity.category}}</view>
+      <view class="title">{{activity.title}}</view>
+      
+      <!-- 活动信息项 -->
+      <view class="info-item">
+        <view class="info-icon">🗓️</view>
+        <view class="info-content">
+          <text class="info-label">时间</text>
+          <text class="info-value">{{activity.date}}</text>
+        </view>
+      </view>
+      
+      <view class="info-item">
+        <view class="info-icon">📍</view>
+        <view class="info-content">
+          <text class="info-label">地点</text>
+          <view class="location-row">
+            <text class="info-value">{{activity.city ? activity.city + ' ' + activity.location : activity.location}}</text>
+            <view class="map-button" bindtap="showMap">查看地图</view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="info-item">
+        <view class="info-icon">💰</view>
+        <view class="info-content">
+          <text class="info-label">费用</text>
+          <text class="info-value">{{activity.price === '0' ? '免费' : activity.price}}</text>
+        </view>
+      </view>
+      
+      <view class="info-item">
+        <view class="info-icon">👥</view>
+        <view class="info-content">
+          <text class="info-label">参与人数</text>
+          <view class="participants-info">
+            <text class="info-value">{{participants.length || 1}}人</text>
+            <text class="limit-tag" wx:if="{{activity.max_participants}}">上限{{activity.max_participants}}人</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 活动详情 -->
+      <view class="section">
+        <view class="section-title">活动详情</view>
+        <text class="description">{{activity.description}}</text>
+      </view>
+      
+      <!-- 参与者列表 -->
+      <view class="section">
+        <view class="section-title">已报名 ({{participants.length || 1}})</view>
+        <view class="participants-list">
+          <view class="participant-item" wx:for="{{participants}}" wx:key="id">
+            <image class="participant-avatar" src="{{item.avatar_url || '/assets/images/default-avatar.png'}}"></image>
+            <text class="participant-name">{{item.username || '用户'+index}}</text>
+          </view>
+          <!-- 如果没有参与者，显示创建者 -->
+          <view class="participant-item" wx:if="{{participants.length === 0}}">
+            <image class="participant-avatar" src="{{creatorInfo.avatar_url || '/assets/images/default-avatar.png'}}"></image>
+            <text class="participant-name">{{creatorInfo.username || '创建者'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 活动按钮区域 -->
+    <view class="action-container">
+      <block wx:if="{{isCreator}}">
+        <button class="primary-button" bindtap="handleEdit">编辑活动</button>
+      </block>
+      <block wx:else>
+        <button 
+          class="{{hasJoined ? 'secondary-button' : 'primary-button'}}" 
+          disabled="{{joining || leaving}}"
+          bindtap="{{hasJoined ? 'handleLeave' : 'handleJoin'}}"
+        >
+          {{joining ? '报名中...' : (leaving ? '退出中...' : (hasJoined ? '退出活动' : '立即报名'))}}
+        </button>
+      </block>
+      <view class="error-message" wx:if="{{errorMessage}}">{{errorMessage}}</view>
+    </view>
+  </block>
+
+  <!-- 地图弹窗 -->
+  <view class="map-modal" wx:if="{{showMap && activity}}">
+    <view class="map-container">
+      <view class="map-header">
+        <text class="map-title">活动地点</text>
+        <view class="close-button" bindtap="hideMap">✖</view>
+      </view>
+      
+      <!-- 使用腾讯地图 -->
+      <map
+        id="activityMap"
+        longitude="{{longitude}}"
+        latitude="{{latitude}}"
+        markers="{{markers}}"
+        scale="16"
+        style="width: 100%; height: 300px;"
+        show-location
+      ></map>
+      
+      <view class="map-footer">
+        <view class="address-info">
+          地址：{{activity.city ? activity.city + ' ' + activity.location : activity.location}}
+        </view>
+        <view class="button-row">
+          <button class="navigate-button" bindtap="navigateToLocation">导航</button>
+          <button class="close-map-button" bindtap="hideMap">关闭</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</view> 

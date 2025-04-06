@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/user-store";
 import { useActivityStore } from "@/store/activity-store";
 import { birthdayToZodiac, formatDate } from "@/lib/utils";
-import { getCurrentUser, checkUserLoggedIn, signOut } from "@/lib/auth";
+import { getCurrentUser, checkUserLoggedIn, signOut, updateUserProfile } from "@/lib/auth";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { User } from "@/lib/auth";
+import LoginChecker from '@/components/shared/LoginChecker';
 
 // 图标组件
 const ExploreIcon = () => (
@@ -80,12 +81,6 @@ export default function ProfilePage() {
   const [isBgUploading, setIsBgUploading] = useState(false);
 
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      const loggedIn = await checkUserLoggedIn();
-      setIsLoggedIn(loggedIn);
-      return loggedIn;
-    };
-
     const fetchUserData = async () => {
       setIsLoading(true);
       try {
@@ -176,26 +171,27 @@ export default function ProfilePage() {
       }
     };
 
-    checkLoginStatus().then(loggedIn => {
-      if (loggedIn) {
-        fetchUserData();
-        
-        // 获取当前用户ID
-        const cookies = document.cookie.split(';');
-        const userIdCookie = cookies.find(cookie => cookie.trim().startsWith('userId='));
-        const userId = userIdCookie ? userIdCookie.split('=')[1].trim() : null;
-        
-        if (userId) {
-          // 获取用户参与的活动
-          fetchUserActivities(userId);
-          // 获取用户收藏的活动
-          fetchUserFavorites(userId);
-        }
-      } else {
-        router.push('/auth');
+    // 获取用户登录后的数据
+    const loadUserData = () => {
+      setIsLoggedIn(true);
+      fetchUserData();
+      
+      // 获取当前用户ID
+      const cookies = document.cookie.split(';');
+      const userIdCookie = cookies.find(cookie => cookie.trim().startsWith('userId='));
+      const userId = userIdCookie ? userIdCookie.split('=')[1].trim() : null;
+      
+      if (userId) {
+        // 获取用户参与的活动
+        fetchUserActivities(userId);
+        // 获取用户收藏的活动
+        fetchUserFavorites(userId);
       }
-    });
-  }, [router, fetchUserActivities, fetchUserFavorites]);
+    };
+
+    // 立即加载数据
+    loadUserData();
+  }, [fetchUserActivities, fetchUserFavorites]);
 
   // 手动刷新数据
   const refreshUserData = async () => {
@@ -1215,103 +1211,121 @@ export default function ProfilePage() {
   );
 
   return (
-    <div style={styles.container}>
-      {/* 顶部导航 */}
-      <div style={styles.header}>
-        <div style={styles.headerTitle}>个人主页</div>
-        <button 
-          onClick={handleLogout}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'white',
-            fontSize: '14px',
-            cursor: 'pointer',
+    <LoginChecker>
+      <div style={styles.container}>
+        {/* 顶部导航 */}
+        <div style={styles.header}>
+          <div style={styles.headerTitle}>个人主页</div>
+          <button 
+            onClick={handleLogout}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'white',
+              fontSize: '14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <span className="material-icons" style={{fontSize: '18px'}}>logout</span>
+            退出登录
+          </button>
+        </div>
+        {/* 如果未登录或正在加载，显示加载中状态 */}
+        {isLoading ? (
+          <div style={{
             display: 'flex',
+            justifyContent: 'center',
             alignItems: 'center',
-            gap: '4px'
-          }}
-        >
-          <span className="material-icons" style={{fontSize: '18px'}}>logout</span>
-          退出登录
-        </button>
-      </div>
-      {/* 如果未登录，显示加载中状态，等待重定向 */}
-      {!isLoggedIn ? (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}>
-          <p>检查登录状态...</p>
-        </div>
-      ) : !user ? (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}>
-          <div style={{height: '32px', width: '32px', border: '4px solid #f0f0f0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite'}}></div>
-        </div>
-      ) : (
-        <>
-          {/* 用户头像上传区域 */}
-          {renderAvatarUpload()}
-          
-          {/* 选项卡导航 */}
-          <div style={styles.tabContainer}>
-            <div 
-              style={{
-                ...styles.tab, 
-                ...(activeTab === 'profile' ? styles.activeTab : {})
-              }}
-              onClick={() => handleTabChange('profile')}
-            >
-              <PersonIcon />
-              <span>个人资料</span>
-            </div>
-            <div 
-              style={{
-                ...styles.tab, 
-                ...(activeTab === 'activities' ? styles.activeTab : {})
-              }}
-              onClick={() => handleTabChange('activities')}
-            >
-              <EventIcon />
-              <span>我的活动</span>
-            </div>
-            <div 
-              style={{
-                ...styles.tab, 
-                ...(activeTab === 'favorites' ? styles.activeTab : {})
-              }}
-              onClick={() => handleTabChange('favorites')}
-            >
-              <FavoriteIcon />
-              <span>我的收藏</span>
-            </div>
+            height: '100vh'
+          }}>
+            <p>加载个人资料...</p>
           </div>
-          
-          {/* 根据选项卡显示不同内容 */}
-          {activeTab === 'profile' && renderProfileTab()}
-          {activeTab === 'activities' && renderActivitiesTab()}
-          {activeTab === 'favorites' && renderFavoritesTab()}
-        </>
-      )}
-      
-      {/* 底部导航 */}
-      <div style={styles.bottomNav}>
-        <Link href="/activities" style={styles.navItem}>
-          <ExploreIcon />
-          <span style={{fontSize: '12px'}}>发现</span>
-        </Link>
-        <Link href="/profile" style={styles.navItemActive}>
-          <PersonIcon />
-          <span style={{fontSize: '12px'}}>我的</span>
-        </Link>
+        ) : !user ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            padding: '0 20px',
+            textAlign: 'center'
+          }}>
+            <p style={{ marginBottom: '20px' }}>未找到用户资料，请尝试重新登录</p>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '10px 20px',
+                background: '#1890ff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              返回登录页
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* 用户头像上传区域 */}
+            {renderAvatarUpload()}
+            
+            {/* 选项卡导航 */}
+            <div style={styles.tabContainer}>
+              <div 
+                style={{
+                  ...styles.tab, 
+                  ...(activeTab === 'profile' ? styles.activeTab : {})
+                }}
+                onClick={() => handleTabChange('profile')}
+              >
+                <PersonIcon />
+                <span>个人资料</span>
+              </div>
+              <div 
+                style={{
+                  ...styles.tab, 
+                  ...(activeTab === 'activities' ? styles.activeTab : {})
+                }}
+                onClick={() => handleTabChange('activities')}
+              >
+                <EventIcon />
+                <span>我的活动</span>
+              </div>
+              <div 
+                style={{
+                  ...styles.tab, 
+                  ...(activeTab === 'favorites' ? styles.activeTab : {})
+                }}
+                onClick={() => handleTabChange('favorites')}
+              >
+                <FavoriteIcon />
+                <span>我的收藏</span>
+              </div>
+            </div>
+            
+            {/* 根据选项卡显示不同内容 */}
+            {activeTab === 'profile' && renderProfileTab()}
+            {activeTab === 'activities' && renderActivitiesTab()}
+            {activeTab === 'favorites' && renderFavoritesTab()}
+          </>
+        )}
+        
+        {/* 底部导航 */}
+        <div style={styles.bottomNav}>
+          <Link href="/activities" style={styles.navItem}>
+            <ExploreIcon />
+            <span style={{fontSize: '12px'}}>发现</span>
+          </Link>
+          <Link href="/profile" style={styles.navItemActive}>
+            <PersonIcon />
+            <span style={{fontSize: '12px'}}>我的</span>
+          </Link>
+        </div>
       </div>
-    </div>
+    </LoginChecker>
   );
 } 

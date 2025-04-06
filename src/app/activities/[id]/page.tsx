@@ -32,6 +32,11 @@ import { formatDateTime } from "@/lib/utils";
 import { Activity as LibActivity } from '@/lib/activities';
 import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { AnimatePresence, motion } from 'framer-motion';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+
+// 导入地图组件
+import TencentMap from '@/components/TencentMap';
+import { APP_CONFIG } from '@/lib/config';
 
 // 图标组件
 const BackIcon = () => (
@@ -145,6 +150,9 @@ export default function ActivityDetailPage() {
   // 添加收藏相关状态
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
+  
+  // 添加地图相关状态
+  const [showMap, setShowMap] = useState(false);
   
   // 从store获取活动数据和方法
   const currentActivity = useActivityStore((state) => state.currentActivity);
@@ -882,6 +890,107 @@ export default function ActivityDetailPage() {
     );
   };
 
+  // 地图处理函数
+  const handleMapClick = () => {
+    setShowMap(true);
+  };
+
+  const closeMap = () => {
+    setShowMap(false);
+  };
+
+  // 地图对话框组件
+  const MapDialog = () => {
+    if (!showMap || !activity) return null;
+    
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        zIndex: 1000,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+      }}>
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.8, opacity: 0 }}
+          style={{
+            backgroundColor: 'white',
+            width: '100%',
+            maxWidth: '500px',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 16px',
+            borderBottom: '1px solid #f0f0f0',
+          }}>
+            <h3 style={{margin: 0, fontSize: '18px'}}>活动地点</h3>
+            <button 
+              onClick={closeMap} 
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div style={{height: '300px', width: '100%'}}>
+            <TencentMap 
+              location={activity.location} 
+              city={activity.city || '北京'} 
+              width="100%" 
+              height={300} 
+              zoom={15}
+            />
+          </div>
+          
+          <div style={{
+            padding: '16px',
+            borderTop: '1px solid #f0f0f0',
+          }}>
+            <p style={{
+              margin: '0 0 8px 0',
+              fontWeight: 'bold',
+            }}>
+              地址：{activity.city ? `${activity.city} ${activity.location}` : activity.location}
+            </p>
+            <button 
+              onClick={closeMap}
+              style={{
+                background: '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                width: '100%',
+              }}
+            >
+              关闭
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  };
+
   // 自定义CSS样式
   const styles = {
     container: {
@@ -1472,6 +1581,9 @@ export default function ActivityDetailPage() {
       
       {/* 分享对话框组件 */}
       <ShareDialog />
+
+      {/* 地图对话框组件 */}
+      <MapDialog />
       
       {/* 如果正在加载，显示加载中状态 */}
       {loading ? (
@@ -1561,9 +1673,37 @@ export default function ActivityDetailPage() {
             
             <div style={{...styles.infoItem, marginBottom: '15px'}}>
               <span style={{...styles.infoIcon, fontSize: '18px'}}><LocationIcon /></span>
-              <div style={{display: 'flex', flexDirection: 'column'}}>
+              <div style={{
+                display: 'flex', 
+                flexDirection: 'column',
+                flex: 1,
+              }}>
                 <span style={{fontWeight: 'bold', color: '#333', marginBottom: '3px'}}>地点</span>
-                <span>{activity.city ? `${activity.city} ${activity.location}` : activity.location}</span>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  width: '100%',
+                }}>
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <MapPin className="w-5 h-5" />
+                    <span>{activity.city} {activity.location}</span>
+                  </div>
+                  <button 
+                    onClick={handleMapClick}
+                    style={{
+                      background: '#f0f9ff',
+                      color: '#0369a1',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '4px 8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    查看地图
+                  </button>
+                </div>
               </div>
             </div>
               

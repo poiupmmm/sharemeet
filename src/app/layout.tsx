@@ -38,24 +38,57 @@ export default function RootLayout({
             __html: `
               // 全局登录检查逻辑
               (function checkLoginStatus() {
-                // 不需要登录就能访问的页面路径
-                const publicPaths = ['/auth', '/'];
-                
-                // 获取当前路径
-                const pathname = window.location.pathname;
-                
-                // 如果当前页面不是公开页面，则检查登录状态
-                if (!publicPaths.includes(pathname)) {
-                  // 从cookie获取登录状态
+                try {
+                  // 不需要登录就能访问的页面路径
+                  const publicPaths = ['/auth', '/', '/auth/login', '/auth/register'];
+                  
+                  // 获取当前路径
+                  const pathname = window.location.pathname;
+                  
+                  // 如果当前是公开页面，不需要检查登录状态
+                  if (publicPaths.some(path => pathname === path || pathname.startsWith(path + '/'))) {
+                    console.log('公开页面，不需要检查登录状态');
+                    return;
+                  }
+                  
+                  console.log('检查登录状态...');
+                  
+                  // 检查cookie中的登录状态
                   const cookies = document.cookie.split(';');
                   const isLoggedInCookie = cookies.find(cookie => cookie.trim().startsWith('isLoggedIn='));
-                  const isUserLoggedIn = isLoggedInCookie && isLoggedInCookie.includes('true');
+                  const userIdCookie = cookies.find(cookie => cookie.trim().startsWith('userId='));
                   
-                  // 如果未登录，重定向到登录页面
-                  if (!isUserLoggedIn) {
-                    console.log('未检测到登录状态，重定向到登录页面');
-                    window.location.href = '/auth';
+                  // 验证登录状态和用户ID
+                  const isLoggedIn = isLoggedInCookie && isLoggedInCookie.includes('true');
+                  const hasUserId = userIdCookie && userIdCookie.split('=')[1].trim().length > 0;
+                  
+                  // 检查localStorage中是否有用户数据
+                  let hasUserData = false;
+                  try {
+                    const userData = localStorage.getItem('userData');
+                    hasUserData = !!userData && userData.length > 10;
+                  } catch (storageError) {
+                    console.error('访问localStorage失败:', storageError);
                   }
+                  
+                  // 如果登录状态不完整，重定向到登录页面
+                  const isValidLogin = isLoggedIn && hasUserId && hasUserData;
+                  
+                  if (!isValidLogin) {
+                    console.log('登录状态无效，重定向到登录页面');
+                    console.log('状态检查:', { isLoggedIn, hasUserId, hasUserData });
+                    
+                    // 保存当前页面URL，以便登录后重定向回来
+                    document.cookie = "redirectAfterLogin=" + encodeURIComponent(pathname) + "; path=/; max-age=3600";
+                    
+                    // 重定向到登录页面
+                    window.location.href = '/auth';
+                  } else {
+                    console.log('用户已登录，继续访问');
+                  }
+                } catch (error) {
+                  console.error('登录状态检查出错:', error);
+                  // 出错时不进行重定向，避免无限重定向循环
                 }
               })();
             `,
