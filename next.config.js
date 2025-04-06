@@ -66,6 +66,12 @@ const nextConfig = {
       });
     }
     
+    // 添加模块解析别名
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, 'src')
+    };
+    
     return config;
   },
   env: {
