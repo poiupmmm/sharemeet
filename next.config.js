@@ -14,7 +14,7 @@ const nextConfig = {
   },
   // 外部包配置和其他实验性功能
   experimental: {
-    serverActions: true,
+    // 移除serverActions配置，因为它现在是默认启用的
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
   // 添加一些安全响应头
@@ -38,10 +38,6 @@ const nextConfig = {
         ],
       },
     ];
-  },
-  // 禁用对特定页面的静态生成，解决预渲染错误
-  generateStaticParams: async () => {
-    return [];
   },
   // 在编译时跳过预渲染特定路径
   compiler: {
