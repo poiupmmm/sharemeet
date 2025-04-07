@@ -1,0 +1,355 @@
+/* 活动详情页样式 */
+
+.activity-detail-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #ffffff;
+}
+
+.loading {
+  font-size: 16px;
+  color: #888888;
+}
+
+/* 错误提示 */
+.error-container,
+.not-found-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 20px;
+  background: #ffffff;
+}
+
+.error-box,
+.not-found-box {
+  text-align: center;
+  width: 100%;
+  max-width: 300px;
+}
+
+.error-title,
+.not-found-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.not-found-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+/* 活动图片 */
+.activity-image {
+  position: relative;
+  width: 100%;
+  height: 220px;
+}
+
+.cover-image {
+  width: 100%;
+  height: 100%;
+}
+
+.back-button,
+.share-button {
+  position: absolute;
+  top: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.back-button {
+  left: 16px;
+}
+
+.share-button {
+  right: 16px;
+}
+
+/* 活动内容 */
+.activity-content {
+  background: #ffffff;
+  border-radius: 16px 16px 0 0;
+  margin-top: -20px;
+  padding: 20px 16px;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.badge {
+  display: inline-block;
+  background: #e6f7ff;
+  color: #1890ff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.info-item {
+  display: flex;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.info-icon {
+  width: 24px;
+  font-size: 18px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #666;
+}
+
+.location-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.map-button {
+  background: #f0f9ff;
+  color: #1890ff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.participants-info {
+  display: flex;
+  align-items: center;
+}
+
+.limit-tag {
+  background: #fff7e6;
+  color: #fa8c16;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+/* 活动详情部分 */
+.section {
+  margin-top: 24px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+  position: relative;
+  padding-left: 12px;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 2px;
+  height: 16px;
+  width: 4px;
+  background: #1890ff;
+  border-radius: 2px;
+}
+
+.description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* 参与者列表 */
+.participants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.participant-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60px;
+}
+
+.participant-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: #f0f0f0;
+  margin-bottom: 6px;
+}
+
+.participant-name {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* 底部按钮区域 */
+.action-container {
+  background: #ffffff;
+  border-top: 1px solid #f0f0f0;
+  padding: 16px;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.primary-button {
+  background: #1890ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  padding: 12px;
+  width: 100%;
+}
+
+.secondary-button {
+  background: #ffffff;
+  color: #1890ff;
+  border: 1px solid #1890ff;
+  border-radius: 8px;
+  font-size: 16px;
+  padding: 12px;
+  width: 100%;
+}
+
+.error-message {
+  color: #f5222d;
+  font-size: 14px;
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* 地图弹窗 */
+.map-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.map-container {
+  background: #ffffff;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.map-title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.close-button {
+  font-size: 18px;
+  color: #999;
+}
+
+.map-footer {
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.address-info {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+}
+
+.navigate-button,
+.close-map-button {
+  flex: 1;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.navigate-button {
+  background: #1890ff;
+  color: #ffffff;
+}
+
+.close-map-button {
+  background: #f5f5f5;
+  color: #666;
+} 

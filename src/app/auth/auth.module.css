@@ -1,0 +1,13 @@
+/* 更精确地覆盖header样式 */
+:global(header),
+:global(.header),
+:global([class*="header"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+} 
